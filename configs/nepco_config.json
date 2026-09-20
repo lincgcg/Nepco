@@ -1,0 +1,15 @@
+{
+  "emb_size": 128,
+  "hidden_size": 256,
+  "hidden_act": "gelu",
+  "layers_num": 5,
+  "kernel_size": 4,
+  "block_size": 2,
+  "max_seq_length": 128,
+  "dropout": 0.1,
+  "data_processor": "mlm",
+  "embedding": ["word"],
+  "remove_embedding_layernorm": true,
+  "encoder": "Nepco",
+  "target": ["mlm"]
+}

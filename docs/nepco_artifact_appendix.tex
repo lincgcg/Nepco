@@ -1,0 +1,125 @@
+\documentclass[10pt,letterpaper,twocolumn]{article}
+\usepackage[letterpaper,top=0.65in,bottom=0.65in,left=0.66in,right=0.66in,columnsep=0.22in]{geometry}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\setlist{nosep,leftmargin=*}
+\titleformat{\section}{\bfseries\normalsize}{\thesection.}{0.45em}{}
+\titleformat{\subsection}{\bfseries\small}{\thesubsection.}{0.4em}{}
+\titlespacing*{\section}{0pt}{0.7ex}{0.3ex}
+\titlespacing*{\subsection}{0pt}{0.55ex}{0.2ex}
+\pagestyle{plain}
+
+\begin{document}
+\twocolumn[
+\begin{center}
+{\Large\bfseries Artifact Appendix: Versatile yet Efficient Network Traffic Analysis: Offloading Network Foundation Model to SmartNIC}\par
+\vspace{0.45em}
+{\small Badges requested: Available and Functional (Reproduced is not requested)}
+\end{center}
+\vspace{0.5em}
+]
+
+\section{Artifact Overview}
+This artifact implements \textsc{Nepco}, a network foundation model designed for early-stage encrypted-traffic analysis and deployment on an NVIDIA BlueField-3 SmartNIC. The release contains the model and training code, configuration and vocabulary, a pretrained checkpoint, packet-capture preprocessing, fine-tuning, host-side latency measurement, ONNX export and quantization, BlueField-3 sender/receiver programs, and adversarial-robustness evaluation. The requested evaluation establishes that the released components are complete, documented, and executable independently of the authors' development machines. It is not a request to reproduce every quantitative result or baseline in the paper.
+
+\section{Description and Requirements}
+\subsection{How to Access}
+The archival artifact is available at \textbf{[ARTIFACT DOI/URL TO BE INSERTED]}. The archive should be cited by its DOI and verified against the SHA-256 checksum published with the release. After extraction, all commands below are run from the artifact root.
+
+\subsection{Artifact Layout}
+\begin{description}[style=multiline,leftmargin=1.05in,font=\ttfamily\small]
+\item[configs/] Nepco architecture configuration.
+\item[uer/] Nepco model, training, data, and utility code.
+\item[vocab/] Four-hex-character vocabulary.
+\item[models/] Released pretrained checkpoint and tokenizer metadata.
+\item[scripts/1\_*/] PCAP-to-corpus and labeled-data generation.
+\item[scripts/2\_*/] Pre-training and fine-tuning.
+\item[scripts/3\_*/] Host CPU/GPU latency measurement.
+\item[scripts/4\_*/] ONNX conversion and BlueField-3 deployment.
+\item[scripts/5\_*/] Adversarial-robustness workflow.
+\end{description}
+
+\subsection{Hardware Dependencies}
+The software workflow runs on a recent x86-64 Linux workstation. We recommend at least 8 CPU cores, 32~GB RAM, and 20~GB free disk space in addition to the selected public datasets and generated outputs. A CUDA-capable NVIDIA GPU with at least 16~GB memory is recommended for fine-tuning and the GPU latency workflow; the host CPU latency workflow does not require a GPU. Full pre-training (100,000 steps) is a long-running experiment and requires substantially more compute.
+
+The SmartNIC workflow requires two Linux hosts connected through NVIDIA BlueField-3/ConnectX-7 interfaces, with DPDK-compatible ports and one BlueField-3 operating as the receiver. The paper testbed used two directly connected servers, each with a 5.4~GHz Intel Core i7-14700 CPU, 64~GB DRAM, a BlueField-3 SmartNIC, and a 200~Gbps link. Commodity hosts can evaluate preprocessing, model execution, and ONNX export, but cannot validate the SmartNIC deployment without equivalent hardware.
+
+\subsection{Software Dependencies}
+Use a recent Linux distribution with Python~3.10 or later. Python dependencies are listed in \texttt{requirements.txt}: PyTorch, NumPy, scikit-learn, Scapy, tqdm, ONNX, and ONNX Runtime. The paper software prototype used PyTorch~2.3.0 with CUDA~12.4. The SmartNIC workflow additionally requires a BlueField-3 SDK/DOCA environment, DPDK, a C++ compiler, GNU Make, root privileges for device binding and execution, and an ONNX Runtime C/C++ installation on the BlueField Arm system. Network access is required only to obtain the artifact, Python packages, and public datasets.
+
+\subsection{Datasets}
+The artifact accepts PCAP/PCAPNG inputs and does not redistribute third-party traffic captures. The paper pre-trained on Bottlenet-HTTPS and ISCX-SlowDoS, and fine-tuned on USTC-TFC, ISCX-VPN-App, ISCX-VPN-Service, DataCon, CIC-EVSE, and CIC-IoMT. Reviewers may use any legally obtained labeled PCAP subset for the functional workflow. Dataset download, licensing, and storage are external to the artifact.
+
+\section{Installation and Configuration}
+Create an isolated Python environment and install the dependencies:
+\begin{verbatim}
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -c "import torch,scapy,onnx; print('OK')"
+\end{verbatim}
+Confirm that \texttt{models/nepco\_pretrained\_model.bin}, \texttt{configs/nepco\_config.json}, and \texttt{vocab/hex\_vocab.txt} are present. GPU users should additionally verify \texttt{torch.cuda.is\_available()}. Detailed flags and output paths are documented in the top-level \texttt{README.md}.
+
+\section{Functional Scope and Claims}
+\begin{itemize}
+\item \textbf{F1---Processing.} The release converts raw packet captures into Nepco's address-sanitized, four-hex-character token representation and creates deterministic 8:1:1 labeled splits.
+\item \textbf{F2---Model execution.} The released checkpoint, architecture, and vocabulary instantiate Nepco; the scripts support fine-tuning and host-side CPU/GPU inference on the first five packets of each flow.
+\item \textbf{F3---Deployment path.} A fine-tuned model can be exported to ONNX, preprocessed, statically quantized, loaded by the BlueField-3 receiver, and exercised by the paired sender.
+\item \textbf{F4---Robustness path.} The evaluation constructs equal-budget Top-$X$ and Random-$X$ byte perturbations from gradient attribution and evaluates both raw and attack-aware models.
+\end{itemize}
+
+These functional checks support the paper's system design and implementation claims. They do not by themselves reproduce the multi-dataset accuracy table, the full baseline comparison, the 20-seed confidence intervals, or the complete SmartNIC load study.
+
+\section{Evaluation Workflow}
+\subsection{E1: Data Processing}
+\textbf{Effort:} about 5 human-minutes plus dataset-dependent compute time. Place a small labeled PCAP subset in one directory per class and run:
+\begin{verbatim}
+PCAP_DIR=/path/to/labeled_pcaps CLASS_NUM=N \
+ bash scripts/1_input_data_processing/\
+ run_finetune_data_generation.sh
+\end{verbatim}
+Successful execution creates \texttt{train\_dataset.tsv}, \texttt{valid\_dataset.tsv}, \texttt{test\_dataset.tsv}, and \texttt{nolabel\_test\_dataset.tsv} under \texttt{outputs/finetune\_data/datasets/}. Inspect several rows and confirm that samples are token sequences with integer labels. E1 evaluates F1.
+
+\subsection{E2: Fine-tuning and Host Inference}
+\textbf{Effort:} about 5 human-minutes; compute time depends on the subset and GPU. With the E1 files, run:
+\begin{verbatim}
+TRAIN_PATH=outputs/finetune_data/datasets/train_dataset.tsv \
+DEV_PATH=outputs/finetune_data/datasets/valid_dataset.tsv \
+TEST_PATH=outputs/finetune_data/datasets/test_dataset.tsv \
+LABELS_NUM=N EPOCHS_NUM=1 BATCH_SIZE=8 \
+ bash scripts/2_model_train/model_finetune/run_finetune.sh
+\end{verbatim}
+The smoke configuration uses one epoch; the paper configuration uses ten. Successful execution writes \texttt{outputs/model\_finetune/models/finetuned\_model.bin} and \texttt{prf/prf.csv}. Next run the CPU latency wrapper with that checkpoint and test file. It should load the model, complete inference, report per-sample latency over several batch sizes, and update the classification summary. E2 evaluates F2.
+
+\subsection{E3: ONNX Export}
+\textbf{Effort:} about 5 human-minutes plus several compute-minutes. Run:
+\begin{verbatim}
+FINETUNED_MODEL_PATH=outputs/model_finetune/models/\
+finetuned_model.bin \
+TRAIN_PATH=outputs/finetune_data/datasets/train_dataset.tsv \
+LABELS_NUM=N \
+ bash scripts/4_latency_measure_SmartNIC/\
+ 1_onnx_conversion/run_onnx_export.sh
+\end{verbatim}
+Successful execution creates \texttt{output.onnx}, \texttt{output.preprocessed.onnx}, and \texttt{output.static\_int8.onnx} under \texttt{outputs/onnx/}. Load each generated graph with ONNX's checker. E3 validates the portable model-conversion part of F3.
+
+\subsection{E4: BlueField-3 Deployment (Hardware-Specific)}
+\textbf{Effort:} 20--40 human-minutes after the BlueField/DPDK environment is operational. On the receiver, build with explicit \texttt{MODEL\_PATH}, \texttt{VOCAB\_PATH}, \texttt{LABELS\_NUM}, and \texttt{ONNX\_ROOT}; build the sender on the peer host. Bind the intended interfaces to DPDK, verify PCI addresses, start the receiver, and then start the sender. The sender should print per-second Mpps/Gbps. The receiver should print and log queue-wait, input-construction, model-inference, and total analysis latency, and should create \texttt{log.txt} and \texttt{flow\_tuples.txt}. E4 completes F3. Exact values depend on hardware and offered load; paper-number reproduction is outside the requested badge scope.
+
+\subsection{E5: Adversarial-Robustness Smoke}
+\textbf{Effort:} about 5 human-minutes plus GPU-dependent compute time. Invoke \texttt{run\_adversarial\_robustness.sh} with the E1 train/validation/test files, \texttt{LABELS\_NUM=N}, one attack seed, one perturbation ratio, and one fine-tuning epoch. The run should create an \texttt{adv\_summary\_AttackSeed\_1.csv} containing clean, Top-$X$, Random-$X$, and attack-aware results. E5 evaluates F4; reproducing the complete robustness figure requires the paper's full dataset, all ratios, and all model baselines.
+
+\section{Expected Results and Interpretation}
+The functional criterion is successful end-to-end execution with the documented files and metrics, not numerical agreement with every paper table. E1 should produce valid deterministic splits; E2 should train and infer without shape or checkpoint errors; E3 should produce valid ONNX graphs; E4 should receive flows, execute inference, and log latency on BlueField-3; and E5 should produce matched-budget perturbation results. Classification scores vary with the selected data subset, split seed, training duration, and hardware. Timing values are not comparable across different CPUs, GPUs, SmartNICs, or traffic generators.
+
+\section{Customization and Notes}
+Reviewers may change the dataset, number of classes, split seed, batch size, learning rate, or perturbation ratio through the documented environment variables and command-line arguments. Keep \texttt{token\_nibbles=4}, \texttt{seq\_length=128}, and \texttt{max\_packets\_per\_flow=5} when checking the paper configuration. Address and transport-port fields are zeroed in the model input to prevent shortcut learning; the original five-tuple remains available to the SmartNIC flow table. Record all deviations from the paper settings when reporting results.
+
+\end{document}
