@@ -9,11 +9,19 @@ The artifacts are organized as follows:
 - `vocab/`: the hexadecimal vocabulary used by Nepco.
 - `models/`: released model resources, including `nepco_pretrained_model.bin`.
 - `scripts/`: executable workflows for reproducing the experiments.
+- `E1/`: self-contained DataCon classification smoke test, including a
+  fine-tuned checkpoint and labeled test TSV.
+- `E2/`: Nepco CPU inference-latency smoke test that reuses the E1 artifacts.
 
 
 ## Function Summary
 
 The scripts for reproducing the Nepco experiments are provided in `scripts/`. They are divided into five functional parts, corresponding to the main artifact-evaluation workflows.
+
+For a short functional check that does not retrain the model or require an
+external dataset, use E1 and E2. E1 reloads the packaged DataCon checkpoint and
+reports classification metrics on the packaged TSV. E2 reloads the same model
+and performs a bounded CPU timing run with batch size 1 on eight fixed cores.
 
 `1_input_data_processing` provides the data preparation pipeline. It supports pre-training data generation by converting raw pcap/pcapng files into a hex-token traffic corpus and then building the pre-training dataset. It also supports fine-tuning data generation by converting labeled pcap directories into Nepco-compatible train/validation/test TSV files.
 
@@ -30,7 +38,7 @@ The scripts for reproducing the Nepco experiments are provided in `scripts/`. Th
 Run all commands from the AE package root:
 
 ```bash
-cd Nepco/AE/Nepco
+cd Nepco
 ```
 
 Install the Python dependencies:
@@ -467,3 +475,60 @@ For each attack seed, the script writes one summary CSV:
 ```text
 outputs/adversarial_robustness/<Dataset>/<Model>/<Run_Seed>/results/adv_summary_AttackSeed_<seed>.csv
 ```
+
+## E1. DataCon Classification Smoke Test
+
+E1 is the primary functional model check. It includes the selected fine-tuned
+DataCon checkpoint and its exact labeled test TSV, so it requires neither
+retraining nor an external dataset:
+
+```text
+E1/artifacts/DataCon/finetuned_model.bin
+E1/artifacts/DataCon/test_dataset.tsv
+```
+
+Run the full 2,857-sample test set from the repository root:
+
+```bash
+PYTHON_BIN=python3 bash E1/run_smoke_test.sh
+```
+
+The evaluator loads the checkpoint with `strict=True` and writes
+`metrics.json`, per-class `prf.csv`, and `predictions.tsv` under
+`E1/results/DataCon/`. The verified result is:
+
+```text
+Precision: 0.9920384649
+Recall:    0.9912944099
+Macro F1:  0.9916037393
+Accuracy:  0.9866993350
+Samples:   2857
+```
+
+The settings and SHA-256 hashes of both input artifacts are recorded in
+`E1/manifest.json`. See `E1/README.md` for the locked training provenance.
+
+## E2. Nepco CPU Latency Smoke Test
+
+E2 verifies the CPU inference-timing path using the packaged E1 model and TSV.
+It evaluates eight samples by default, fixes batch size to 1, pins the process
+to exactly eight logical CPU cores, performs one warm-up pass, and records five
+measurement passes:
+
+```bash
+PYTHON_BIN=python3 CPU_CORES=0-7 bash E2/run_smoke_test.sh
+```
+
+Set `CPU_CORES` to any eight logical cores available on the host. The verified
+h800 run used `CPU_CORES=168-175`. Results are written to:
+
+```text
+E2/results/DataCon/nepco.json
+E2/results/DataCon/nepco.csv
+```
+
+The verified functional run completed at `2.271679 ± 0.201898 ms/sample` on
+the recorded h800 host. This bounded value confirms that the timing code path
+works; it is not a full-dataset or cross-system performance result. See
+`E2/README.md` and `E2/manifest.json` for the exact timing boundary and
+environment.

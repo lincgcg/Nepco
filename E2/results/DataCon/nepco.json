@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "model_path": "E1/artifacts/DataCon/finetuned_model.bin",
+  "test_path": "E1/artifacts/DataCon/test_dataset.tsv",
+  "results": [
+    {
+      "model": "nepco",
+      "batch_size": 1,
+      "samples": 8,
+      "threads": 8,
+      "cpu_cores": [
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175
+      ],
+      "warmup_passes": 1,
+      "repetitions": 5,
+      "timing_scope": "sum of model.infer calls only",
+      "mean_ms_per_sample": 2.2716789302648976,
+      "ci95_half_ms_per_sample": 0.20189811479995165,
+      "runs_ms_per_sample": [
+        2.460888514178805,
+        2.399763514404185,
+        2.2787043708376586,
+        2.1312652388587594,
+        2.08777301304508
+      ]
+    }
+  ]
+}

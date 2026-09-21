@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "dataset": "DataCon",
+  "dataset_split_seed": 11,
+  "model_seed": 7,
+  "pretraining_learning_rate": 0.001,
+  "finetuning_learning_rate": 0.005,
+  "epochs": 10,
+  "sequence_length": 128,
+  "labels": 10,
+  "artifacts": {
+    "artifacts/DataCon/finetuned_model.bin": {
+      "bytes": 34031323,
+      "sha256": "8338e9b92ba5e2ac5ba04bf02e684747792542ee591533e5674a668b879833db"
+    },
+    "artifacts/DataCon/test_dataset.tsv": {
+      "bytes": 5589850,
+      "rows_including_header": 2858,
+      "sha256": "31fe8cbbc8f51dee35bbeb9ce051b75a7202782c72f304eb4a921c780c53c6f8"
+    }
+  },
+  "verified_metrics": {
+    "samples": 2857,
+    "precision_macro": 0.9920384648594831,
+    "recall_macro": 0.9912944099378391,
+    "f1_macro": 0.9916037392987576,
+    "accuracy": 0.9866993349667483
+  }
+}

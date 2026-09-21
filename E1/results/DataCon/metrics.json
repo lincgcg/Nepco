@@ -1,0 +1,10 @@
+{
+  "accuracy": 0.9866993349667483,
+  "device": "cpu",
+  "f1_macro": 0.9916037392987576,
+  "model_path": "E1/artifacts/DataCon/finetuned_model.bin",
+  "precision_macro": 0.9920384648594831,
+  "recall_macro": 0.9912944099378391,
+  "samples": 2857,
+  "test_path": "E1/artifacts/DataCon/test_dataset.tsv"
+}

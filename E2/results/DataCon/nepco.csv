@@ -1,0 +1,2 @@
+model,batch_size,samples,threads,cpu_cores,warmup_passes,repetitions,mean_ms_per_sample,ci95_half_ms_per_sample
+nepco,1,8,8,"168,169,170,171,172,173,174,175",1,5,2.2716789302648976,0.20189811479995165
