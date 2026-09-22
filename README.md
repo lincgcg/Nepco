@@ -1,3 +1,24 @@
+# Nepco
+
+Versatile yet Efficient Network Traffic Analysis: Offloading Network Foundation Model to SmartNIC
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22821675.svg)](https://doi.org/10.5281/zenodo.22893237)
+
+## Citation
+
+The accepted manuscript is available on [arXiv](https://arxiv.org/abs/2508.02001).
+
+```bibtex
+@inproceedings{lin2025versatile,
+  title={Versatile yet Efficient Network Traffic Analysis: Offloading Network Foundation Model to SmartNIC},
+  author={Lin, Chungang and Meng, Xuying and Zuo, Tianyu and Zhang, Weiyao and Shen, Meng and Zhao, Ruijie and Che, Guanming and Meng, Ruiqi and Huang, Ziyue and Luo, Haitong and others},
+  booktitle = {34th Annual Network and Distributed System Security Symposium (NDSS)},
+  year = {2027},
+  note = {To appear},
+  url = {https://arxiv.org/abs/2508.02001}
+}
+```
+
 ## Introduction
 
 This repository contains the artifacts needed to reproduce the main Nepco experiments. It includes the Nepco model implementation, the model configuration, the vocabulary, a released Nepco pre-trained checkpoint, and the scripts used for data processing, model training, latency measurement, SmartNIC deployment, and adversarial robustness evaluation.
