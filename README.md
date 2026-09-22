@@ -1,4 +1,4 @@
-# Nepco
+# _Nepco_
 
 Versatile yet Efficient Network Traffic Analysis: Offloading Network Foundation Model to SmartNIC
 
