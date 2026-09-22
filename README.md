@@ -2,7 +2,7 @@
 
 Versatile yet Efficient Network Traffic Analysis: Offloading Network Foundation Model to SmartNIC
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22821675.svg)](https://doi.org/10.5281/zenodo.22893365)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22893365.svg)](https://doi.org/10.5281/zenodo.22893365)
 
 ## Citation
 
