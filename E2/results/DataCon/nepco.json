@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "model_path": "E1/artifacts/DataCon/finetuned_model.bin",
-  "test_path": "E1/artifacts/DataCon/test_dataset.tsv",
+  "model_path": "../E1/artifacts/DataCon/finetuned_model.bin",
+  "test_path": "../E1/artifacts/DataCon/test_dataset.tsv",
   "results": [
     {
       "model": "nepco",

@@ -6,25 +6,16 @@
   "protocol": {
     "samples": 8,
     "batch_size": 1,
-    "default_cpu_affinity": "0-7",
-    "verified_cpu_affinity": "168-175",
+    "cpu_affinity": "Eight distinct available logical cores, configured by CPU_CORES",
+    "cpu_affinity_default": "0-7",
     "threads": 8,
     "warmup_passes": 1,
     "repetitions": 5,
     "timing_scope": "sum of model.infer calls only",
     "statistic": "mean milliseconds per sample with two-sided 95% CI half-width; t(4)=2.776"
   },
-  "environment": {
-    "host": "cstor",
-    "kernel": "Linux 5.15.0-107-generic x86_64",
-    "cpu": "Intel(R) Xeon(R) Platinum 8458P",
-    "sockets": 2,
-    "cores_per_socket": 44,
-    "threads_per_core": 2,
-    "python": "3.10.14",
-    "torch": "2.3.0+cu121"
-  },
   "verified_smoke_result": {
+    "cpu_affinity": "168-175",
     "mean_ms_per_sample": 2.2716789302648976,
     "ci95_half_ms_per_sample": 0.20189811479995165,
     "note": "Functional smoke-test timing only; not a paper-grade benchmark"
@@ -42,10 +33,10 @@
     }
   },
   "verified_files": {
-    "results/DataCon/nepco.json": "b0b34f4b0fb87ccff42fde2fc055a0bca39cb5bb832871c37930f6297293b375",
+    "results/DataCon/nepco.json": "e4f7f726d00977fa892f320f33e7d1eae0774992d34785ed34e2114da035cac9",
     "results/DataCon/nepco.csv": "86e9edb46802fbdf23f89945c04211764604c9123df40f1e06acf0d2ebc0cd1c",
     "run_classifier_DCS_nowandb_measure_Nepco_CPU.py": "f9e57712f8c62af6d66364ab9509268b386ab0c444203db42417984a6614d4cb",
-    "latency_common.py": "d517f9d974f621a772b31572299bd1f9b5d8200e1f435717426774b92c9970b6",
+    "latency_common.py": "b4addddacd8a8e698e0daad37fccc0576743859ec370c14ff9299f2fbd23eebf",
     "run_nepco_cpu.sh": "de0068ca4e092a46eebcb0c6a3407dfa5675cf35c95a3761be8dfbd57e5ae30e",
     "run_smoke_test.sh": "11d8f2dea4c28f390b99090cb5064f39e42a37513560bd02ceab13b00483ed75"
   }

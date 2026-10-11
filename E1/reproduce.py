@@ -158,9 +158,6 @@ def main():
         "precision_macro": sum(item[1] for item in per_class) / args.labels_num,
         "recall_macro": sum(item[2] for item in per_class) / args.labels_num,
         "f1_macro": sum(item[3] for item in per_class) / args.labels_num,
-        "model_path": str(Path(args.output_model_path).resolve()),
-        "test_path": str(Path(args.test_path).resolve()),
-        "device": str(device),
     }
 
     results_dir = Path(args.results_dir)
@@ -183,7 +180,7 @@ def main():
     print(f"Macro F1:  {summary['f1_macro']:.10f}")
     print(f"Accuracy:  {summary['accuracy']:.10f}")
     print(f"Samples:   {summary['samples']}")
-    print(f"Results:   {results_dir.resolve()}")
+    print("Saved metrics.json, prf.csv, and predictions.tsv.")
 
 
 if __name__ == "__main__":

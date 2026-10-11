@@ -30,19 +30,16 @@ The artifacts are organized as follows:
 - `vocab/`: the hexadecimal vocabulary used by Nepco.
 - `models/`: released model resources, including `nepco_pretrained_model.bin`.
 - `scripts/`: executable workflows for reproducing the experiments.
-- `E1/`: self-contained DataCon classification smoke test, including a
-  fine-tuned checkpoint and labeled test TSV.
-- `E2/`: Nepco CPU inference-latency smoke test that reuses the E1 artifacts.
+- `E1/`: DataCon quick experiment and full-test classification for Nepco and TraGe on nine datasets, including released fine-tuned models and test TSVs.
+- `E2/`: CPU latency smoke test and full-test CPU/GPU inference benchmarks for Nepco and TraGe, reusing the E1 artifacts.
+- `E_Mapping/`: paper figure/table mappings, resource requirements, and example commands.
 
 
 ## Function Summary
 
 The scripts for reproducing the Nepco experiments are provided in `scripts/`. They are divided into five functional parts, corresponding to the main artifact-evaluation workflows.
 
-For a short functional check that does not retrain the model or require an
-external dataset, use E1 and E2. E1 reloads the packaged DataCon checkpoint and
-reports classification metrics on the packaged TSV. E2 reloads the same model
-and performs a bounded CPU timing run with batch size 1 on eight fixed cores.
+For functional checks without retraining or external datasets, use E1 and E2. E1 reloads the supplied Nepco and TraGe models and reports full-test classification metrics. E2 provides the original bounded CPU timing check and additional full-test CPU/GPU benchmarks. See [E_Mapping/README.md](E_Mapping/README.md) for the corresponding paper experiments.
 
 `1_input_data_processing` provides the data preparation pipeline. It supports pre-training data generation by converting raw pcap/pcapng files into a hex-token traffic corpus and then building the pre-training dataset. It also supports fine-tuning data generation by converting labeled pcap directories into Nepco-compatible train/validation/test TSV files.
 
@@ -271,6 +268,44 @@ outputs/model_finetune/models/prf/prf.csv
 
 `finetuned_model.bin` is the checkpoint with the best validation accuracy. `prf.csv` contains per-class precision, recall, and F1-score on the test set.
 
+### 2.3 Few-shot Evaluation
+
+`few_shot.py` samples up to a specified number of training examples per class and fine-tunes Nepco separately for each shot count. Only the training set is sampled; the validation set and the full supplied test set remain unchanged. Runs execute sequentially at one specified learning rate, without an automatic learning-rate search.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 scripts/2_model_train/model_finetune/few_shot.py \
+  --pretrained_model_path models/nepco_pretrained_model.bin \
+  --config_path configs/nepco_config.json \
+  --vocab_path vocab/hex_vocab.txt \
+  --train_path outputs/finetune_data/datasets/train_dataset.tsv \
+  --dev_path outputs/finetune_data/datasets/valid_dataset.tsv \
+  --test_path outputs/finetune_data/datasets/test_dataset.tsv \
+  --labels_num 15 \
+  --shot_list 5 25 50 250 500 2500 5000 \
+  --shot_seed 3 \
+  --learning_rate 5e-4 \
+  --epochs_num 10 \
+  --batch_size 32 \
+  --seq_length 128 \
+  --output_root outputs/few_shot
+```
+
+Set `--labels_num` to the dataset's class count. With a nominal reference of 5,000 examples per class, the listed shot counts correspond to the labeled-data budgets of 0.1%, 0.5%, 1%, 5%, 10%, 50%, and 100% used for the Figure 6 experiment. These are per-class sample budgets, not percentages of the supplied training TSV. If a class contains fewer training examples than requested, all available examples are used and the actual count is recorded. Add `--strict_shots` to reject such cases.
+
+Use `--prepare_only` to generate the sampled training TSVs without starting model training. The default sampling seed is `3`; the existing fine-tuning entry uses model seed `7`.
+
+Each shot count has a separate output directory:
+
+```text
+outputs/few_shot/shot_<count>/train_dataset.tsv
+outputs/few_shot/shot_<count>/sampling.json
+outputs/few_shot/shot_<count>/train.log
+outputs/few_shot/shot_<count>/models/finetuned_model.bin
+outputs/few_shot/shot_<count>/models/prf/prf.csv
+```
+
+`sampling.json` records the requested and actual per-class sample counts. The checkpoint is selected using validation accuracy and evaluated on the full supplied test set. With `--prepare_only`, only `train_dataset.tsv` and `sampling.json` are generated. Existing shot directories are not overwritten; use a new `--output_root` for another run.
+
 ## 3. Latency Measure Host
 
 This part measures Nepco inference latency on a host CPU or GPU. The scripts load a fine-tuned Nepco checkpoint and run inference on a TSV test set.
@@ -388,7 +423,7 @@ Build the receiver:
 MODEL_PATH=/absolute/path/to/output.preprocessed.onnx \
 VOCAB_PATH=/absolute/path/to/hex_vocab.txt \
 LABELS_NUM=15 \
-ONNX_ROOT=/home/ubuntu/pre2/onnx \
+ONNX_ROOT="${ONNX_ROOT:?Set ONNX_ROOT to your ONNX Runtime installation}" \
 bash scripts/4_latency_measure_SmartNIC/2_SmartNIC_deployment/run_build_receiver.sh
 ```
 
@@ -401,7 +436,7 @@ bash scripts/4_latency_measure_SmartNIC/2_SmartNIC_deployment/run_build_sender.s
 Run the receiver:
 
 ```bash
-ONNX_ROOT=/home/ubuntu/pre2/onnx \
+ONNX_ROOT="${ONNX_ROOT:?Set ONNX_ROOT to your ONNX Runtime installation}" \
 RECEIVER_PCI=0000:03:00.0,dv_flow_en=2 \
 bash scripts/4_latency_measure_SmartNIC/2_SmartNIC_deployment/run_receiver.sh
 ```
@@ -499,9 +534,7 @@ outputs/adversarial_robustness/<Dataset>/<Model>/<Run_Seed>/results/adv_summary_
 
 ## E1. DataCon Classification Smoke Test
 
-E1 is the primary functional model check. It includes the selected fine-tuned
-DataCon checkpoint and its exact labeled test TSV, so it requires neither
-retraining nor an external dataset:
+E1 is the primary functional model check. The fine-tuned Nepco and TraGe checkpoints and accepted test TSVs for all nine datasets are distributed separately through Google Drive (approximately 5 GB). Before running E1 or E2, follow [Download E1 artifacts](E1/artifacts/README.md) and place the nine dataset folders directly under `E1/artifacts/`. No retraining is required. For example, the DataCon Nepco model and test TSV must be located at:
 
 ```text
 E1/artifacts/DataCon/finetuned_model.bin
@@ -511,7 +544,7 @@ E1/artifacts/DataCon/test_dataset.tsv
 Run the full 2,857-sample test set from the repository root:
 
 ```bash
-PYTHON_BIN=python3 bash E1/run_smoke_test.sh
+bash E1/run_smoke_test.sh
 ```
 
 The evaluator loads the checkpoint with `strict=True` and writes
@@ -526,30 +559,51 @@ Accuracy:  0.9866993350
 Samples:   2857
 ```
 
-The settings and SHA-256 hashes of both input artifacts are recorded in
-`E1/manifest.json`. See `E1/README.md` for the locked training provenance.
+E1 also provides full-test evaluation on all nine datasets for Nepco and TraGe:
+
+```bash
+bash E1/run_smoke_test.sh --all --device cpu
+bash E1/run_trage.sh all --device cpu
+```
+
+The manifests record the configurations, verified metrics, and artifact hashes.
+See [E1/README.md](E1/README.md) for both models' verified full-test results and
+the inference commands. No training is performed by these entry points.
 
 ## E2. Nepco CPU Latency Smoke Test
 
 E2 verifies the CPU inference-timing path using the packaged E1 model and TSV.
-It evaluates eight samples by default, fixes batch size to 1, pins the process
-to exactly eight logical CPU cores, performs one warm-up pass, and records five
-measurement passes:
+The original smoke test evaluates eight samples by default, fixes batch size
+to 1, pins execution to its configured eight logical CPU cores, performs one
+warm-up pass, and records five measurement passes:
 
 ```bash
-PYTHON_BIN=python3 CPU_CORES=0-7 bash E2/run_smoke_test.sh
+bash E2/run_smoke_test.sh
 ```
 
-Set `CPU_CORES` to any eight logical cores available on the host. The verified
-h800 run used `CPU_CORES=168-175`. Results are written to:
+The original script uses eight logical cores (default `0-7`), configurable through
+`CPU_CORES`, which must select cores available to the current process; see
+[E2/README.md](E2/README.md) for the exact requirements. Results are written to:
 
 ```text
 E2/results/DataCon/nepco.json
 E2/results/DataCon/nepco.csv
 ```
 
-The verified functional run completed at `2.271679 ± 0.201898 ms/sample` on
-the recorded h800 host. This bounded value confirms that the timing code path
-works; it is not a full-dataset or cross-system performance result. See
-`E2/README.md` and `E2/manifest.json` for the exact timing boundary and
-environment.
+The verified functional run completed at `2.271679 ± 0.201898 ms/sample`.
+This bounded value confirms that the timing code path works; it is not a
+full-dataset or cross-system performance result.
+
+E2 additionally provides full-test inference benchmarks for Nepco and TraGe
+across eight batch sizes and four CPU core counts, with CPU and GPU
+configurations measured sequentially:
+
+```bash
+python3 E2/benchmark_inference.py --model nepco --device cpu --cpu_cores 8 --batch_size 16
+python3 E2/benchmark_inference.py --model trage --device cuda --gpu_index 0 --batch_size 128
+bash E2/run_benchmark.sh --gpu_index 0
+```
+
+See [E2/README.md](E2/README.md) for the full-test results, timing boundaries,
+and resource conditions. The full-test runner selects CPU cores dynamically
+and saves new measurements separately from the packaged results.

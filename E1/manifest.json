@@ -1,29 +1,410 @@
 {
-  "schema_version": 1,
-  "dataset": "DataCon",
-  "dataset_split_seed": 11,
-  "model_seed": 7,
-  "pretraining_learning_rate": 0.001,
-  "finetuning_learning_rate": 0.005,
-  "epochs": 10,
-  "sequence_length": 128,
-  "labels": 10,
-  "artifacts": {
-    "artifacts/DataCon/finetuned_model.bin": {
-      "bytes": 34031323,
-      "sha256": "8338e9b92ba5e2ac5ba04bf02e684747792542ee591533e5674a668b879833db"
+  "schema_version": 2,
+  "datasets": {
+    "DataCon": {
+      "configuration": {
+        "labels": 10,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 2857,
+        "accuracy": 0.9866993349667483,
+        "precision_macro": 0.9920384648594831,
+        "recall_macro": 0.9912944099378391,
+        "f1_macro": 0.9916037392987576
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/DataCon/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "artifacts/DataCon/test_dataset.tsv": {
+          "sha256": "31fe8cbbc8f51dee35bbeb9ce051b75a7202782c72f304eb4a921c780c53c6f8",
+          "bytes": 5589850
+        },
+        "artifacts/DataCon/finetuned_model.bin": {
+          "sha256": "8338e9b92ba5e2ac5ba04bf02e684747792542ee591533e5674a668b879833db",
+          "bytes": 34031323
+        },
+        "results/DataCon/prf.csv": {
+          "sha256": "bca613ea816c89ef64603f2f07b9c61a5b22b040bbb0d27a8e7ae2c0d8211436",
+          "bytes": 603
+        },
+        "results/DataCon/predictions.tsv": {
+          "sha256": "fc80b54034db5e707bff368621d9cbbe0c0f50adc69755d835b1b6b0f2f133f6",
+          "bytes": 27485
+        },
+        "results/DataCon/metrics.json": {
+          "sha256": "201df10ede9e58ac4845c3a20927ad4fcff64e2f05270cf9945cc6ff2733bd3e",
+          "bytes": 169
+        }
+      }
     },
-    "artifacts/DataCon/test_dataset.tsv": {
-      "bytes": 5589850,
-      "rows_including_header": 2858,
-      "sha256": "31fe8cbbc8f51dee35bbeb9ce051b75a7202782c72f304eb4a921c780c53c6f8"
+    "CIC-EVSE": {
+      "configuration": {
+        "labels": 15,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 5925,
+        "accuracy": 0.9172995780590717,
+        "precision_macro": 0.8871187098257354,
+        "recall_macro": 0.8904631132324553,
+        "f1_macro": 0.8824131675981073
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/CIC-EVSE/finetuned_model.bin": {
+          "sha256": "6a1210e28bf77a5518ebac3f5ac950fd268c1355da9e37d9e666575cded3fee4",
+          "bytes": 34036507
+        },
+        "artifacts/CIC-EVSE/test_dataset.tsv": {
+          "sha256": "0255cf5b17b319de31c24f3886d83941bb188bdc23d811669a52b0c013ce2bf2",
+          "bytes": 27140367
+        },
+        "artifacts/CIC-EVSE/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "results/CIC-EVSE/predictions.tsv": {
+          "sha256": "42684c74bb61860b1870e00a7d444c4b2867664d9df591976e707a1df8d84a27",
+          "bytes": 63436
+        },
+        "results/CIC-EVSE/metrics.json": {
+          "sha256": "393179c7cbe3db79695a3350cbffafbf1afa3d714988de8a4274564beca751ec",
+          "bytes": 169
+        },
+        "results/CIC-EVSE/prf.csv": {
+          "sha256": "8f89da09b90318ecfd8118b3f7f5ca45339b1f7903398c1f542841ebdd3d1c25",
+          "bytes": 913
+        }
+      }
+    },
+    "CIC-IoMT": {
+      "configuration": {
+        "labels": 19,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 6716,
+        "accuracy": 0.8548243001786778,
+        "precision_macro": 0.8343574137648552,
+        "recall_macro": 0.8080725965496982,
+        "f1_macro": 0.8160454267815935
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/CIC-IoMT/finetuned_model.bin": {
+          "sha256": "82f9d8159359134a77e887868863b71f95f505742075cbf9a11fd089566c1c7c",
+          "bytes": 34040603
+        },
+        "artifacts/CIC-IoMT/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "artifacts/CIC-IoMT/test_dataset.tsv": {
+          "sha256": "42557cc12381a299320a1158d1a988e65ff40978621d534d81b73f5f434a406e",
+          "bytes": 44751564
+        },
+        "results/CIC-IoMT/prf.csv": {
+          "sha256": "55323d839bd5ff7607645eaa342f1121d24a5d35e3b1ef3e5a19b164b586b6d1",
+          "bytes": 1161
+        },
+        "results/CIC-IoMT/metrics.json": {
+          "sha256": "b5116875b7e5f791672ce74d289ab63f024d2a18d0cfa09fb651fff36f74f906",
+          "bytes": 169
+        },
+        "results/CIC-IoMT/predictions.tsv": {
+          "sha256": "2f7554bcf169a3209cd663f06b48f76a943df724b0bb125d16308f9bf7fa6ac3",
+          "bytes": 72506
+        }
+      }
+    },
+    "ISCX-VPN-App": {
+      "configuration": {
+        "labels": 17,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 3336,
+        "accuracy": 0.5782374100719424,
+        "precision_macro": 0.7038003591955084,
+        "recall_macro": 0.7070583514249172,
+        "f1_macro": 0.7033850763247533
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/ISCX-VPN-App/test_dataset.tsv": {
+          "sha256": "d237e7ddd1d2818d3dd2a9a0d3d04ad4e13b97f4c03e2c5f0112041de46514ca",
+          "bytes": 5377369
+        },
+        "artifacts/ISCX-VPN-App/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "artifacts/ISCX-VPN-App/finetuned_model.bin": {
+          "sha256": "fe05e84254f3ca5829e3fd3a68143377ff154d20298280424feaf1628a0bc313",
+          "bytes": 34038555
+        },
+        "results/ISCX-VPN-App/metrics.json": {
+          "sha256": "82e98c6fc862b2ae51069401b068f93bf70d6da4c9d9d4ad3752cd16c6928e7b",
+          "bytes": 169
+        },
+        "results/ISCX-VPN-App/prf.csv": {
+          "sha256": "cb04b84faaba9ab53182822b072a3f40c48a9565b795f9d2d233b490499be480",
+          "bytes": 1051
+        },
+        "results/ISCX-VPN-App/predictions.tsv": {
+          "sha256": "32b8c1bafd68f686f1750866ee02d84e055d8417714cbd0c08e71c603a74e160",
+          "bytes": 35193
+        }
+      }
+    },
+    "ISCX-VPN-Service": {
+      "configuration": {
+        "labels": 12,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 2896,
+        "accuracy": 0.9005524861878453,
+        "precision_macro": 0.9252022274694406,
+        "recall_macro": 0.9188670128866633,
+        "f1_macro": 0.9209466015410008
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/ISCX-VPN-Service/test_dataset.tsv": {
+          "sha256": "74bd8015bf76d6e3f2f497c0a1c5313cab7362ae8eb75a9a81e6cbb89693e429",
+          "bytes": 5874905
+        },
+        "artifacts/ISCX-VPN-Service/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "artifacts/ISCX-VPN-Service/finetuned_model.bin": {
+          "sha256": "b16fd616476e3c9922b19999311d259c7a0d7c021e90a42b54fb8096d7d652f5",
+          "bytes": 34033371
+        },
+        "results/ISCX-VPN-Service/predictions.tsv": {
+          "sha256": "c9abe92e6544598e978e2687622fc633450a7a699aec74a66a7b4a0c2cea4e07",
+          "bytes": 28337
+        },
+        "results/ISCX-VPN-Service/prf.csv": {
+          "sha256": "9bd3311f9c8b88557b1f7e95ce90891fac86968531e11593a2bc31a542973ac8",
+          "bytes": 744
+        },
+        "results/ISCX-VPN-Service/metrics.json": {
+          "sha256": "31847f24ada833ec5f912df1fdd39f8d77b4b5b4f506cd37a5a3fc1ed410f465",
+          "bytes": 169
+        }
+      }
+    },
+    "USTC-TFC": {
+      "configuration": {
+        "labels": 10,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 5000,
+        "accuracy": 0.964,
+        "precision_macro": 0.966422102928238,
+        "recall_macro": 0.963999999999998,
+        "f1_macro": 0.9638322396944371
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/USTC-TFC/test_dataset.tsv": {
+          "sha256": "462b6376e1bf36502cd482013840544efe0d84cf81ef882200c08d1a1a50f812",
+          "bytes": 7932389
+        },
+        "artifacts/USTC-TFC/finetuned_model.bin": {
+          "sha256": "42ed4407a9f70cb33f80726b2371ed983fa855bfac63823b22c3cc43c39aa25f",
+          "bytes": 34031323
+        },
+        "artifacts/USTC-TFC/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "results/USTC-TFC/metrics.json": {
+          "sha256": "8c784efa623df281b55fbccdf43816a097ef478f7932e4e09414b2324ef63f70",
+          "bytes": 154
+        },
+        "results/USTC-TFC/prf.csv": {
+          "sha256": "3bbd97831e345dfb47a9c54b422365105b56fbc30d3c06ef1f3bbec5b69f0642",
+          "bytes": 614
+        },
+        "results/USTC-TFC/predictions.tsv": {
+          "sha256": "36fffcef45857c5bb27384fb19e96987b43911357476501056bd45afa16826e9",
+          "bytes": 48915
+        }
+      }
+    },
+    "CSTNET-20": {
+      "configuration": {
+        "labels": 20,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 794,
+        "accuracy": 0.8803526448362721,
+        "precision_macro": 0.8881866149922824,
+        "recall_macro": 0.8746239139654479,
+        "f1_macro": 0.8714466582264526
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/CSTNET-20/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "artifacts/CSTNET-20/test_dataset.tsv": {
+          "sha256": "92c0f03a5640815b54f18a0da87acd76189988858b26cf68b3384f90a242a4fb",
+          "bytes": 4919105
+        },
+        "artifacts/CSTNET-20/finetuned_model.bin": {
+          "sha256": "c441ad708f1a9cf5ed91f4ef7bb0014814fad220d3f022ba0a17f3207ab265b8",
+          "bytes": 34041627
+        },
+        "results/CSTNET-20/prf.csv": {
+          "sha256": "af73f74662d4f79a80d0c93a66c77f1308bdf4a657341234aa4a3aead807b232",
+          "bytes": 1228
+        },
+        "results/CSTNET-20/metrics.json": {
+          "sha256": "5357be76abd51fec29609194b7cab4595e2c2049841caa731e1c3c4b974cdf8e",
+          "bytes": 168
+        },
+        "results/CSTNET-20/predictions.tsv": {
+          "sha256": "584427f1086bba84605e3c15e7d396f6156b646408460032a3776e330b378e48",
+          "bytes": 7873
+        }
+      }
+    },
+    "CSTNET-120": {
+      "configuration": {
+        "labels": 120,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 4637,
+        "accuracy": 0.696355402199698,
+        "precision_macro": 0.6739587275886156,
+        "recall_macro": 0.6481867627259853,
+        "f1_macro": 0.6437680809521065
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/CSTNET-120/test_dataset.tsv": {
+          "sha256": "d04c8638743207fd656c7f30b00160dbadf3032ebae7bf3334dd1ff37f7fbd75",
+          "bytes": 24516163
+        },
+        "artifacts/CSTNET-120/finetuned_model.bin": {
+          "sha256": "e9eb5286838a1801cc9c60b493b82b1fdb91839515f5825db407cd31f8a30a7a",
+          "bytes": 34144411
+        },
+        "artifacts/CSTNET-120/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "results/CSTNET-120/predictions.tsv": {
+          "sha256": "74cf71c85be751bd02d176b904dd4245aade8f1b371cbcef8cb4e2ba9e67614d",
+          "bytes": 55253
+        },
+        "results/CSTNET-120/metrics.json": {
+          "sha256": "4afe3196641c95609416cb3ec43339eb71167f5d0275e1312c347f0030a12e17",
+          "bytes": 168
+        },
+        "results/CSTNET-120/prf.csv": {
+          "sha256": "bb4f3bf51fafbb73a518bdbd2f79815c8531817d6ac2a8e637779f70444312ca",
+          "bytes": 7222
+        }
+      }
+    },
+    "DoHBrw": {
+      "configuration": {
+        "labels": 5,
+        "sequence_length": 128,
+        "batch_size": 32,
+        "pooling": "max",
+        "embedding": [
+          "word"
+        ]
+      },
+      "verified_metrics": {
+        "samples": 2500,
+        "accuracy": 0.6308,
+        "precision_macro": 0.6392464248063439,
+        "recall_macro": 0.6307999999999988,
+        "f1_macro": 0.6333643499174783
+      },
+      "status": "complete",
+      "artifacts": {
+        "artifacts/DoHBrw/finetuned_model.bin": {
+          "sha256": "6d0cfe1c9a938969ecaf6c644d1c51a2415e7a9b07aced393ce651842d74a9a8",
+          "bytes": 34026203
+        },
+        "artifacts/DoHBrw/test_dataset.tsv": {
+          "sha256": "c4c821a1b8a0dc2546af07c9403d7f8f20b4ad1bfeba2087804738b165f69985",
+          "bytes": 14640314
+        },
+        "artifacts/DoHBrw/model_config.json": {
+          "sha256": "0cc3493dc3d8076ef0e873fc9a6b6c9e413a91a1142c057f74a154f2fb153b33",
+          "bytes": 301
+        },
+        "results/DoHBrw/metrics.json": {
+          "sha256": "65253d06c0ace4c6ba0f75b51e8b168903043e20f79fc71045cebaad67495fc5",
+          "bytes": 157
+        },
+        "results/DoHBrw/predictions.tsv": {
+          "sha256": "07cf8f70abdc806bda08607fdfeac3ca6c1b90a035b9831e300795423aa1b9f9",
+          "bytes": 23915
+        },
+        "results/DoHBrw/prf.csv": {
+          "sha256": "80686603393c94dedac590dac97ec18268fd32177eaafe071f7d0cb959d8ff20",
+          "bytes": 325
+        }
+      }
     }
-  },
-  "verified_metrics": {
-    "samples": 2857,
-    "precision_macro": 0.9920384648594831,
-    "recall_macro": 0.9912944099378391,
-    "f1_macro": 0.9916037392987576,
-    "accuracy": 0.9866993349667483
   }
 }

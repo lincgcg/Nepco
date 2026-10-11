@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Measurement utilities for the Nepco CPU latency smoke test."""
+"""Shared measurement utilities for the two model-specific CPU entry points."""
 
 import csv
+import fcntl
 import json
 import math
 import os
@@ -13,26 +14,27 @@ import torch
 
 
 def parse_cpu_cores(spec):
-    """Parse a Linux taskset-style list such as ``0-7`` or ``0,2,4,6``."""
+    """Parse exactly eight distinct, nonnegative Linux logical CPU IDs."""
     cores = []
     for part in spec.split(","):
         part = part.strip()
         if not part:
-            continue
+            raise ValueError("CPU_CORES contains an empty entry")
         if "-" in part:
-            start_text, end_text = part.split("-", 1)
-            start, end = int(start_text), int(end_text)
-            if end < start:
-                raise ValueError(f"Invalid CPU range: {part}")
+            bounds = part.split("-")
+            if len(bounds) != 2 or not all(b.strip().isdigit() for b in bounds):
+                raise ValueError(f"Invalid CPU range: {part!r}")
+            start, end = map(int, bounds)
+            if end < start or end - start >= 8:
+                raise ValueError(f"Invalid eight-core CPU range: {part!r}")
             cores.extend(range(start, end + 1))
         else:
+            if not part.isdigit():
+                raise ValueError(f"Invalid CPU ID: {part!r}")
             cores.append(int(part))
-    unique = tuple(sorted(set(cores)))
-    if len(unique) != 8:
-        raise ValueError(
-            f"CPU_CORES must select exactly 8 logical cores; got {spec!r}"
-        )
-    return unique
+    if len(cores) != 8 or len(set(cores)) != 8:
+        raise ValueError(f"CPU_CORES must select exactly 8 distinct logical cores; got {spec!r}")
+    return tuple(sorted(cores))
 
 
 CPU_CORES = parse_cpu_cores(os.environ.get("CPU_CORES", "0-7"))
@@ -47,6 +49,12 @@ def configure_cpu():
     requested = set(CPU_CORES)
     if not hasattr(os, "sched_setaffinity"):
         raise RuntimeError("This benchmark requires Linux CPU affinity support.")
+    available = set(os.sched_getaffinity(0))
+    if not requested.issubset(available):
+        raise RuntimeError(
+            f"CPU_CORES selects unavailable cores: {sorted(requested - available)}; "
+            "set CPU_CORES to eight logical cores allowed for this process"
+        )
     os.sched_setaffinity(0, requested)
     actual = set(os.sched_getaffinity(0))
     if actual != requested:
@@ -128,6 +136,8 @@ def ci95_half_width(values):
 
 
 def run_benchmark(model_name, model, args, constants, output_dir, max_samples=None):
+    lock = (Path(__file__).resolve().parent / '.latency.lock').open('a')
+    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     affinity = configure_cpu()
     src, seg = read_test_tensors(args, constants, max_samples=max_samples)
 
@@ -166,8 +176,8 @@ def run_benchmark(model_name, model, args, constants, output_dir, max_samples=No
     csv_path = output_dir / f"{model_name}.csv"
     payload = {
         "schema_version": 2,
-        "model_path": str(Path(args.output_model_path).resolve()),
-        "test_path": str(Path(args.test_path).resolve()),
+        "model_path": "../E1/artifacts/DataCon/finetuned_model.bin",
+        "test_path": "../E1/artifacts/DataCon/test_dataset.tsv",
         "results": [result],
     }
     json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
