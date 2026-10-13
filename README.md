@@ -30,8 +30,8 @@ The artifacts are organized as follows:
 - `vocab/`: the hexadecimal vocabulary used by Nepco.
 - `models/`: released model resources, including `nepco_pretrained_model.bin`.
 - `scripts/`: executable workflows for reproducing the experiments.
-- `E1/`: DataCon quick experiment and full-test classification for Nepco and TraGe on nine datasets, including released fine-tuned models and test TSVs.
-- `E2/`: CPU latency smoke test and full-test CPU/GPU inference benchmarks for Nepco and TraGe, reusing the E1 artifacts.
+- `E1/`: versatility evaluation through Nepco and TraGe classification on nine datasets; fine-tuned checkpoints and test TSVs are downloaded separately.
+- `E2/`: efficiency evaluation through full-test host CPU/GPU benchmarks for Nepco and TraGe, plus instructions for Nepco SmartNIC deployment.
 - `E_Mapping/`: paper figure/table mappings, resource requirements, and example commands.
 
 
@@ -39,7 +39,7 @@ The artifacts are organized as follows:
 
 The scripts for reproducing the Nepco experiments are provided in `scripts/`. They are divided into five functional parts, corresponding to the main artifact-evaluation workflows.
 
-For functional checks without retraining or external datasets, use E1 and E2. E1 reloads the supplied Nepco and TraGe models and reports full-test classification metrics. E2 provides the original bounded CPU timing check and additional full-test CPU/GPU benchmarks. See [E_Mapping/README.md](E_Mapping/README.md) for the corresponding paper experiments.
+E1 and E2 evaluate the two core aspects of Nepco: versatility and efficiency. E1 reports Nepco and TraGe classification performance on nine complete test sets (TABLE III and TABLE VI). E2.1 compares their host CPU/GPU inference latency (Fig. 9), while E2.2 provides the Nepco SmartNIC deployment workflow (Figs. 7–8 and TABLE IV). E1 and E2.1 reuse released checkpoints without retraining; E2.2 requires two BlueField-3 SmartNICs. See [E_Mapping/README.md](E_Mapping/README.md) for the corresponding paper experiments.
 
 `1_input_data_processing` provides the data preparation pipeline. It supports pre-training data generation by converting raw pcap/pcapng files into a hex-token traffic corpus and then building the pre-training dataset. It also supports fine-tuning data generation by converting labeled pcap directories into Nepco-compatible train/validation/test TSV files.
 
@@ -532,9 +532,9 @@ For each attack seed, the script writes one summary CSV:
 outputs/adversarial_robustness/<Dataset>/<Model>/<Run_Seed>/results/adv_summary_AttackSeed_<seed>.csv
 ```
 
-## E1. DataCon Classification Smoke Test
+## E1. Versatility Evaluation
 
-E1 is the primary functional model check. The fine-tuned Nepco and TraGe checkpoints and accepted test TSVs for all nine datasets are distributed separately through Google Drive (approximately 5 GB). Before running E1 or E2, follow [Download E1 artifacts](E1/artifacts/README.md) and place the nine dataset folders directly under `E1/artifacts/`. No retraining is required. For example, the DataCon Nepco model and test TSV must be located at:
+E1.1 evaluates Nepco and E1.2 evaluates TraGe on the nine datasets in TABLE III and TABLE VI. Their fine-tuned checkpoints and test TSVs are distributed separately through Google Drive (approximately 5 GB). Before running E1 or E2.1, follow [Download E1 artifacts](E1/artifacts/README.md) and place the nine dataset folders directly under `E1/artifacts/`. No retraining is required. For example, the DataCon Nepco model and test TSV must be located at:
 
 ```text
 E1/artifacts/DataCon/finetuned_model.bin
@@ -570,33 +570,17 @@ The manifests record the configurations, verified metrics, and artifact hashes.
 See [E1/README.md](E1/README.md) for both models' verified full-test results and
 the inference commands. No training is performed by these entry points.
 
-## E2. Nepco CPU Latency Smoke Test
+## E2. Efficiency Evaluation
 
-E2 verifies the CPU inference-timing path using the packaged E1 model and TSV.
-The original smoke test evaluates eight samples by default, fixes batch size
-to 1, pins execution to its configured eight logical CPU cores, performs one
-warm-up pass, and records five measurement passes:
+### E2.1: Host CPU/GPU Inference Latency
 
-```bash
-bash E2/run_smoke_test.sh
-```
+E2.1 compares Nepco and TraGe using the complete 2,857-sample DataCon test set
+from E1. Both models are evaluated at batch sizes 1, 2, 4, 8, 16, 32, 64,
+and 128; CPU mode additionally uses 8, 16, 32, and 64 physical cores.
+The 80 CPU/GPU configurations run sequentially with one warm-up pass and five
+measured passes each. Only model-forward execution is timed.
 
-The original script uses eight logical cores (default `0-7`), configurable through
-`CPU_CORES`, which must select cores available to the current process; see
-[E2/README.md](E2/README.md) for the exact requirements. Results are written to:
-
-```text
-E2/results/DataCon/nepco.json
-E2/results/DataCon/nepco.csv
-```
-
-The verified functional run completed at `2.271679 ± 0.201898 ms/sample`.
-This bounded value confirms that the timing code path works; it is not a
-full-dataset or cross-system performance result.
-
-E2 additionally provides full-test inference benchmarks for Nepco and TraGe
-across eight batch sizes and four CPU core counts, with CPU and GPU
-configurations measured sequentially:
+Run individual configurations or the complete matrix from the repository root:
 
 ```bash
 python3 E2/benchmark_inference.py --model nepco --device cpu --cpu_cores 8 --batch_size 16
@@ -606,4 +590,19 @@ bash E2/run_benchmark.sh --gpu_index 0
 
 See [E2/README.md](E2/README.md) for the full-test results, timing boundaries,
 and resource conditions. The full-test runner selects CPU cores dynamically
-and saves new measurements separately from the packaged results.
+and saves new measurements under `E2/results/local_runs/`, separately from
+the reference results under `E2/results/DataCon/full_benchmark/`.
+Linux CPU-affinity/topology support and `nvidia-smi` are required; the complete
+matrix also requires 64 available physical CPU cores and a CUDA-capable GPU.
+
+### E2.2: SmartNIC Analysis Latency
+
+E2.2 uses two connected NVIDIA BlueField-3 SmartNICs with DOCA/DPDK and
+ONNX Runtime to measure Nepco throughput and analysis latency. Follow
+[E2.2 in E2/README.md](E2/README.md#e22-smartnic-analysis-latency) for preparation,
+sender/receiver commands, and result locations. The ONNX export and deployment
+workflows are provided in [Section 4](#4-latency-measure-smartnic) above.
+
+The original eight-sample CPU smoke test remains available as an optional
+timing-path check with `bash E2/run_smoke_test.sh`. It is separate from the
+complete-test-set evaluation in E2.1.

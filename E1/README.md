@@ -1,13 +1,17 @@
-# E1: DataCon smoke test
+# E1: Versatility Evaluation
 
-This directory provides a quick experiment on DataCon and comprehensive experiments on all nine datasets, including Nepco and TraGe.
+This experiment evaluates Nepco and TraGe on the nine traffic-analysis datasets in TABLE III and TABLE VI, supporting the versatility claim (C1). It provides a quick experiment on DataCon and comprehensive full-test evaluation on all nine datasets.
 The scripts reload the supplied fine-tuned models and evaluate their test TSV files; they do not retrain models.
 
 Before running either model, download the approximately 5 GB artifact release from Google Drive and place the dataset folders under `E1/artifacts/` as described in [Download E1 artifacts](artifacts/README.md).
 
-## Quick experiment: DataCon
+## E1.1: Nepco Classification Performance
 
-### Nepco
+### Preparation
+
+Download the artifacts as described above. Each dataset directory must contain `test_dataset.tsv`, `finetuned_model.bin`, and `model_config.json`.
+
+### Execution: quick experiment on DataCon
 
 Run from the Nepco artifact root:
 
@@ -17,9 +21,7 @@ bash E1/run_smoke_test.sh
 
 This evaluates the full DataCon test set.
 
-## Comprehensive experiment: all nine datasets
-
-### Nepco
+### Execution: all nine datasets
 
 ```bash
 bash E1/run_smoke_test.sh --all
@@ -31,11 +33,11 @@ CPU is the default. Add `--device cuda` to the all-dataset command to use CUDA. 
 python3 E1/reproduce_dataset.py USTC-TFC --device cpu
 ```
 
-The all-dataset entry point checks artifact hashes and runs all nine full test sets. Fresh results are saved under `results/<dataset>/reproduced/`, preserving accepted results in `results/<dataset>/`.
+### Results
 
-## Files and configurations
+The all-dataset entry point checks artifact hashes and runs all nine full test sets. Fresh `metrics.json`, per-class `prf.csv`, and per-sample `predictions.tsv` files are saved under `E1/results/<dataset>/reproduced/`, preserving reference results in `E1/results/<dataset>/`. The prediction count should match the evaluated sample count. Compare macro precision, recall, and F1 with the Nepco table below and the corresponding entries in TABLE III and TABLE VI.
 
-### Nepco
+### Files and configurations
 
 - `artifacts/<dataset>/`: `finetuned_model.bin`, `test_dataset.tsv`, and `model_config.json`.
 - `results/<dataset>/`: reference `metrics.json`, `prf.csv`, and `predictions.tsv`.
@@ -45,9 +47,15 @@ The all-dataset entry point checks artifact hashes and runs all nine full test s
 
 Nepco inference uses sequence length 128, batch size 32, max pooling, and word embeddings. Each dataset's architecture is supplied in `model_config.json`. CSTNET-120 uses the 96-byte data variant; USTC-TFC uses nonoverlap bigram stride2 and packet prefix128. No training or validation data is required.
 
-## TraGe
+## E1.2: TraGe Classification Performance
+
+### Preparation
 
 TraGe uses a separate inference-only Transformer runtime, vocabulary, and reproduction entry point. It shares the existing test TSVs with Nepco; no pretraining checkpoint or train/validation TSVs are needed for inference.
+
+Confirm that each dataset has its TraGe checkpoint and configuration under `E1/artifacts/<dataset>/TraGe/`.
+
+### Execution
 
 Run from the Nepco artifact root, as with the Nepco commands above:
 
@@ -56,13 +64,19 @@ Run from the Nepco artifact root, as with the Nepco commands above:
 bash E1/run_trage.sh
 
 # Comprehensive experiment: all nine full test sets
-bash E1/run_trage.sh all --device cuda
+bash E1/run_trage.sh all
 
 # One selected dataset
-bash E1/run_trage.sh USTC-TFC --device cuda
+bash E1/run_trage.sh USTC-TFC
 ```
 
-CPU is the default; omit `--device cuda` to run on CPU. Each command checks package hashes and exact agreement with the verified confusion matrix. Fresh results are saved under `E1/results/<dataset>/TraGe/reproduced/`, preserving accepted results in `E1/results/<dataset>/TraGe/`.
+CPU is the default; append `--device cuda` for GPU execution. Each command checks package hashes and exact agreement with the verified confusion matrix.
+
+### Results
+
+Fresh `metrics.json`, `prf.csv`, and `predictions.tsv` files are saved under `E1/results/<dataset>/TraGe/reproduced/`, preserving reference results in `E1/results/<dataset>/TraGe/`. Compare the macro metrics with the TraGe table below and the corresponding entries in TABLE III and TABLE VI.
+
+### Files and configurations
 
 - `artifacts/<dataset>/TraGe/`: `finetuned_model.bin` and `model_config.json`.
 - `artifacts/<dataset>/test_dataset.tsv`: the existing test TSV shared with Nepco.

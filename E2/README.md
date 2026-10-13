@@ -1,77 +1,20 @@
-# E2: Nepco CPU latency smoke test
+# E2: Efficiency Evaluation
 
-E2 is a functional smoke test for the Nepco CPU inference path. It loads the
-fine-tuned DataCon checkpoint and test TSV already packaged by E1, runs Nepco
-inference, and writes machine-readable timing results.
+E2 evaluates traffic-analysis latency under host CPU/GPU deployment (E2.1,
+Fig. 9) and SmartNIC deployment (E2.2, Figs. 7–8 and TABLE IV), supporting
+the efficiency claim (C2). E2.1 compares Nepco and TraGe on the complete
+DataCon test set; E2.2 uses the Nepco BlueField-3 deployment workflow.
 
-The smoke test intentionally answers one question: can the released Nepco
-checkpoint and TSV be loaded and timed end to end? It is not intended to
-produce a paper-grade host benchmark or an ET-BERT comparison.
+## E2.1: Host CPU/GPU Inference Latency
 
-## Fixed smoke-test protocol
+### Preparation
 
-- Model and data: `E1/artifacts/DataCon/finetuned_model.bin` and
-  `E1/artifacts/DataCon/test_dataset.tsv`.
-- Samples: first 8 test rows by default.
-- Batch size: 1.
-- CPU affinity: eight logical cores, default `0-7`, configurable with `CPU_CORES`.
-- PyTorch/OMP/MKL/OpenBLAS threads: 8.
-- Warm-up: one pass.
-- Measurement: five passes.
-- Timing boundary: the sum of `model.infer` calls only; checkpoint loading,
-  TSV parsing, tokenization, tensor construction, and output writing are
-  excluded.
-- Statistic: mean milliseconds per sample and a 95% confidence-interval
-  half-width across the five passes.
-
-The checkpoint is loaded with `strict=True`, so an architecture mismatch fails
-instead of silently benchmarking a partially loaded model.
-
-## Run
-
-From the AE package root:
-
-```bash
-bash E2/run_smoke_test.sh
-```
-
-The result files are:
-
-```text
-E2/results/DataCon/nepco.json
-E2/results/DataCon/nepco.csv
-```
-
-`MAX_SAMPLES` may be increased for a longer timing check while keeping the
-batch size and CPU-core assignment fixed:
-
-```bash
-MAX_SAMPLES=32 bash E2/run_smoke_test.sh
-```
-
-The script requires Linux `taskset`. `CPU_CORES` must select exactly eight
-distinct logical cores available to the current process. For example:
-
-```bash
-CPU_CORES=8-15 bash E2/run_smoke_test.sh
-```
-
-Choose core IDs allowed on your machine; the default `0-7` is not available in
-every restricted environment.
-
-## Verified functional run
-
-The packaged smoke test used logical cores 168–175 and completed successfully
-with a mean of `2.271679 ms/sample`
-and a 95% CI half-width of `0.201898 ms/sample` over the five eight-sample
-passes. This value confirms that the timing path works; it should not be cited
-as a full-dataset latency result.
-
-## Full-test inference efficiency: Nepco and TraGe
-
-The original smoke test above is unchanged in purpose. This additional experiment
-compares Nepco and TraGe using the entire accepted DataCon test set from E1.
-No model, vocabulary, or test dataset is duplicated in E2, and no training is run.
+Download the DataCon artifacts following [Download E1 artifacts](../E1/artifacts/README.md).
+This experiment reuses the Nepco and TraGe checkpoints and the complete
+2,857-sample test TSV from E1 without duplicating artifacts or retraining.
+The full matrix requires up to 64 available physical CPU cores and a
+CUDA-capable NVIDIA GPU. Linux CPU-affinity/topology support and `nvidia-smi`
+are required, including for the CPU resource gate.
 
 ### Full-test protocol
 
@@ -99,12 +42,11 @@ No model, vocabulary, or test dataset is duplicated in E2, and no training is ru
   retained in JSON. At batch sizes greater than 1, amortized ms/sample is not
   single-request response latency.
 
-The new runner requires Linux affinity/topology support and `nvidia-smi`, including
-for the CPU resource gate, plus the Python dependencies used by E1. It selects
-physical cores dynamically; insufficient core capacity is an error, not a reason
-to substitute SMT threads. Choose an available GPU with `--gpu_index`.
+The runner selects physical cores dynamically; insufficient core capacity is
+an error, not a reason to substitute SMT threads. Choose an available GPU with
+`--gpu_index`.
 
-### Run the additional full-test experiment
+### Execution
 
 From the AE package root, run a single configuration:
 
@@ -126,7 +68,7 @@ configurations only; other errors stop the run for inspection. `PYTHON_BIN` may
 optionally select a Python interpreter for the shell entry point, without a
 hard-coded environment path. Do not run old/new timing commands concurrently.
 
-### Verified full-test results
+### Results
 
 All 80 configurations completed and passed an independent audit: exact matrix,
 full sample counts and tails, reference prediction equality, raw timing and
@@ -181,7 +123,7 @@ two sockets without explicit NUMA memory binding. Exact timings depend on
 hardware, runtime, and load; the portable runner does not promise identical values
 on another machine. Host identity and absolute server paths are not published.
 
-### Additional result files
+### Result files
 
 ```text
 E2/full_benchmark_manifest.json
@@ -197,3 +139,91 @@ The model/device directories contain all 80 original configuration records.
 `full_benchmark_manifest.json` records the protocol, relative input references,
 input hashes, and hashes of every packaged result. The historical smoke test
 continues to use its original scripts and `results/DataCon/nepco.*` files.
+
+## E2.2: SmartNIC Analysis Latency
+
+### Preparation
+
+Prepare two connected NVIDIA BlueField-3 SmartNICs with DOCA/DPDK and
+ONNX Runtime for C/C++. Configure device access, hugepages, and CPU affinity
+on an isolated test link. Export the selected Nepco checkpoint from the
+repository root, supplying its calibration training TSV and class count:
+
+```bash
+FINETUNED_MODEL_PATH=outputs/model_finetune/models/finetuned_model.bin \
+TRAIN_PATH=outputs/finetune_data/datasets/train_dataset.tsv \
+LABELS_NUM=15 \
+bash scripts/4_latency_measure_SmartNIC/1_onnx_conversion/run_onnx_export.sh
+```
+
+Replace the example inputs and class count with those for the selected model.
+The exporter requires a training TSV for INT8 calibration; the E1 test TSV
+is not a substitute. Transfer the exported model, vocabulary, and deployment
+sources to the receiver if using a separate system. The deployment uses
+`outputs/onnx/output.preprocessed.onnx` by default.
+
+### Execution
+
+Run from the repository root on each corresponding system:
+
+```bash
+DEPLOY=scripts/4_latency_measure_SmartNIC/2_SmartNIC_deployment
+```
+
+On the receiver, export `ONNX_ROOT` (ONNX Runtime installation), `MODEL_PATH`,
+`VOCAB_PATH`, `LABELS_NUM`, and `RECEIVER_PCI` for the testbed, then run:
+
+```bash
+bash "$DEPLOY/run_build_receiver.sh"
+bash "$DEPLOY/run_receiver.sh"
+```
+
+On the sender, export `SENDER_PCI` and `SENDER_PORT_ID`, then run:
+
+```bash
+bash "$DEPLOY/run_build_sender.sh"
+bash "$DEPLOY/run_sender.sh"
+```
+
+The runtime wrappers invoke `sudo` for device access. See the
+[SmartNIC deployment instructions](../scripts/4_latency_measure_SmartNIC/2_SmartNIC_deployment/README.md)
+for the available settings.
+
+### Results
+
+The sender reports throughput; the receiver logs queue wait, input construction,
+inference, and total analysis latency in `log.txt` under `OUTPUT_DIR`
+(default `outputs/SmartNIC_deployment/receiver/`). These measurements support
+the SmartNIC evaluation associated with Figs. 7–8 and TABLE IV. Separate
+collection time when reporting post-collection analysis latency. Measurement
+settings and aggregation for the corresponding figures and tables are outlined
+in [E_Mapping/README.md](../E_Mapping/README.md). E2.1 provides a host-side
+comparison without SmartNIC hardware.
+
+## Optional quick CPU timing check
+
+The original eight-sample Nepco smoke test remains available without changing
+its scripts or protocol:
+
+```bash
+bash E2/run_smoke_test.sh
+```
+
+It uses the DataCon Nepco checkpoint, batch size 1, eight logical CPU cores,
+one warm-up pass, and five measured passes. Only `model.infer` calls are timed;
+loading, tokenization, tensor construction, and output writing are excluded.
+The checkpoint is loaded with `strict=True`.
+
+Linux `taskset` is required. `CPU_CORES` must select exactly eight available
+logical cores; its default is `0-7`. For example:
+
+```bash
+CPU_CORES=8-15 bash E2/run_smoke_test.sh
+```
+
+Choose core IDs available on your machine. `MAX_SAMPLES` can increase the
+sample count while keeping the batch size and core count fixed. Outputs are
+`E2/results/DataCon/nepco.json` and `E2/results/DataCon/nepco.csv`.
+The archived functional run reports `2.271679 ± 0.201898 ms/sample`
+(mean and 95% CI half-width). This eight-sample check is separate from the
+full-test E2.1 comparison above.
